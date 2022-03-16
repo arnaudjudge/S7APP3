@@ -26,10 +26,12 @@ class HandwrittenWords(Dataset):
 
         # Extraction des symboles
         labels = dict()
-        coords = dict()
+        x = list()
+        y = list()
         for i in range(len(raw_data)):
             labels[i] = raw_data[i][0]
-            coords[i] = torch.stack((torch.tensor(raw_data[i][1][0]), torch.tensor(raw_data[i][1][1])))
+            x.append(torch.tensor(raw_data[i][1][0]))
+            y.append(torch.tensor(raw_data[i][1][1]))
 
         # Dictionnaire de symboles
         for i in range(len(labels)):
@@ -42,9 +44,10 @@ class HandwrittenWords(Dataset):
         self.int2symb = {v:k for k,v in self.symb2int.items()}
 
         # Ajout du padding aux séquences
+        # Paddings mots
         self.max = 0
         for word in labels.values():
-            if len(word) >= self.max :
+            if len(word) >= self.max:
                 self.max = len(word)
         for key in labels.keys() :
             labels[key] = labels[key] + [self.stop_symbol]
@@ -52,16 +55,21 @@ class HandwrittenWords(Dataset):
                 num_pads = ((self.max - len(labels[key]) + 1))
                 labels[key] = labels[key] + [self.pad_symbol for _ in range(num_pads)]
 
+        # Padding coordonnees
+        x = torch.nn.utils.rnn.pad_sequence(x, batch_first=True, padding_value=np.inf)
+        y = torch.nn.utils.rnn.pad_sequence(y, batch_first=True, padding_value=np.inf)
+
+        # Format de sortie
         self.data = dict()
         for i in range(len(labels)):
-            self.data[i] = (labels[i], coords[i])
+            self.data[i] = (labels[i], torch.stack((x[i], y[i])))
+
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
         label = self.data[idx][0]
-        print(label)
         symb_label = [self.symb2int[i] for i in label]
         return symb_label, self.data[idx][1]
 
