@@ -59,6 +59,7 @@ class HandwrittenWords(Dataset):
         x = torch.nn.utils.rnn.pad_sequence(x, batch_first=True, padding_value=np.inf)
         y = torch.nn.utils.rnn.pad_sequence(y, batch_first=True, padding_value=np.inf)
 
+        self.max_len = {'coords': len(x), 'labels': len(labels)}
         # Format de sortie
         self.data = dict()
         for i in range(len(labels)):
