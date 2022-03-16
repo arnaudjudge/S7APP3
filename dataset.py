@@ -29,6 +29,24 @@ class HandwrittenWords(Dataset):
 
         print(1)
         # Ajout du padding aux séquences
+        chars_dict = {}
+
+        for i in range(len(self.data)):
+            chars_dict[i] = [char for char in self.data[i][0]]
+        print(chars_dict[57])
+
+        self.max = 0
+        for word in chars_dict.values():
+            if len(word) >= self.max :
+                self.max = len(word)
+        for key in chars_dict.keys() :
+            chars_dict[key] = chars_dict[key] + [self.stop_symbol]
+            if len(chars_dict[key])-1 < self.max:
+                self.num_pads = ((self.max - len(chars_dict[key]) + 1))
+                for i in range(self.num_pads) :
+                    chars_dict[key] = chars_dict[key] + [self.pad_symbol]
+
+        print(chars_dict[785])
         # À compléter
         
     def __len__(self):
