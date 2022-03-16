@@ -17,48 +17,61 @@ class HandwrittenWords(Dataset):
         self.start_symbol   = start_symbol = '<sos>'
         self.stop_symbol    = stop_symbol = '<eos>'
 
-        self.raw_data = dict()
+        self.symb2int = {self.pad_symbol: 2, self.start_symbol:0, self.stop_symbol:1}
+        counter_symb = 3
+
+        raw_data = dict()
         with open(filename, 'rb') as fp:
-            self.raw_data = pickle.load(fp)
+            raw_data = pickle.load(fp)
 
         # Extraction des symboles
-        self.data = dict()
-        for i in range(len(self.raw_data)):
-            self.data[i] = (self.raw_data[i][0], torch.stack((torch.tensor(self.raw_data[i][1][0]), torch.tensor(self.raw_data[i][1][1]))))
+        labels = dict()
+        coords = dict()
+        for i in range(len(raw_data)):
+            labels[i] = raw_data[i][0]
+            coords[i] = torch.stack((torch.tensor(raw_data[i][1][0]), torch.tensor(raw_data[i][1][1])))
 
+        # Dictionnaire de symboles
+        for i in range(len(labels)):
+            label = list(labels[i])
+            for symb in label:
+                if symb not in self.symb2int:
+                    self.symb2int[symb] = counter_symb
+                    counter_symb += 1
+            labels[i] = label
+        self.int2symb = {v:k for k,v in self.symb2int.items()}
 
-        print(1)
         # Ajout du padding aux séquences
-        chars_dict = {}
-
-        for i in range(len(self.data)):
-            chars_dict[i] = [char for char in self.data[i][0]]
-        print(chars_dict[57])
-
         self.max = 0
-        for word in chars_dict.values():
+        for word in labels.values():
             if len(word) >= self.max :
                 self.max = len(word)
-        for key in chars_dict.keys() :
-            chars_dict[key] = chars_dict[key] + [self.stop_symbol]
-            if len(chars_dict[key])-1 < self.max:
-                self.num_pads = ((self.max - len(chars_dict[key]) + 1))
-                for i in range(self.num_pads) :
-                    chars_dict[key] = chars_dict[key] + [self.pad_symbol]
+        for key in labels.keys() :
+            labels[key] = labels[key] + [self.stop_symbol]
+            if len(labels[key])-1 < self.max:
+                num_pads = ((self.max - len(labels[key]) + 1))
+                labels[key] = labels[key] + [self.pad_symbol for _ in range(num_pads)]
 
-        print(chars_dict[785])
-        # À compléter
-        
+        self.data = dict()
+        for i in range(len(labels)):
+            self.data[i] = (labels[i], coords[i])
+
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        return self.data[idx][0], self.data[idx][1]
+        label = self.data[idx][0]
+        print(label)
+        symb_label = [self.symb2int[i] for i in label]
+        return symb_label, self.data[idx][1]
 
     def visualisation(self, idx):
         # Visualisation des échantillons
-        # À compléter (optionel)
-        pass
+        item = self.__getitem__(idx)
+        plt.figure()
+        plt.plot(item[1][0], item[1][1], '-bo')
+        plt.title(item[0])
+        plt.show()
         
 
 if __name__ == "__main__":
