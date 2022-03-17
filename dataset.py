@@ -35,7 +35,9 @@ class HandwrittenWords(Dataset):
 
         # Dictionnaire de symboles
         for i in range(len(labels)):
-            label = list(labels[i])
+
+            label = list(labels[i]) # dictionnaire qui contient les mots sous forme de listes
+            #création de dictionnaire int2symb de toutes les lettres qui compose les mots manuscrits ( en ajoutant le sos,eos et pad)
             for symb in label:
                 if symb not in self.symb2int:
                     self.symb2int[symb] = counter_symb
@@ -51,17 +53,17 @@ class HandwrittenWords(Dataset):
                 self.max = len(word)
         for key in labels.keys() :
             labels[key] = labels[key] + [self.stop_symbol]
-            if len(labels[key])-1 < self.max:
+            if len(labels[key])-1 < self.max: # -1 pour enlever le eos ajouté en avant
                 num_pads = ((self.max - len(labels[key]) + 1))
                 labels[key] = labels[key] + [self.pad_symbol for _ in range(num_pads)]
 
-        # Padding coordonnees
+        # Padding coordonnees with inf value
         x = torch.nn.utils.rnn.pad_sequence(x, batch_first=True, padding_value=np.inf)
         y = torch.nn.utils.rnn.pad_sequence(y, batch_first=True, padding_value=np.inf)
-
         self.max_len = {'coords': len(x), 'labels': len(labels)}
         # Format de sortie
         self.data = dict()
+        #replace the original ata with padded data (words and coordinates)
         for i in range(len(labels)):
             self.data[i] = (labels[i], torch.stack((x[i], y[i])))
 
