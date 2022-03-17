@@ -5,10 +5,11 @@ import torch
 from torch import nn
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
+
+import dataset
 from models import *
 from dataset import *
 from metrics import *
-
 if __name__ == '__main__':
 
     # ---------------- Paramètres et hyperparamètres ----------------#
@@ -19,9 +20,11 @@ if __name__ == '__main__':
     gen_test_images = True     # Génération images test?
     seed = 1                # Pour répétabilité
     n_workers = 0           # Nombre de threads pour chargement des données (mettre à 0 sur Windows)
-
+    batch_size = 80
+    n_hidden = 25
+    n_layers = 3
     # À compléter
-    n_epochs = 0
+    n_epochs = 20
 
     # ---------------- Fin Paramètres et hyperparamètres ----------------#
 
@@ -36,20 +39,27 @@ if __name__ == '__main__':
     # Instanciation de l'ensemble de données
     # À compléter
 
+    dataset_words = HandwrittenWords("data_trainval.p")
     
     # Séparation de l'ensemble de données (entraînement et validation)
     # À compléter
-   
+    dataset_train, dataset_val = torch.utils.data.random_split(dataset_words,
+                                                               [int(len(dataset_words) * 0.7),
+                                                                int(len(dataset_words) - int(
+                                                                    len(dataset_words) * 0.7))])
 
     # Instanciation des dataloaders
     # À compléter
-
+    dataload_train = DataLoader(dataset_train, batch_size=batch_size, shuffle=True, num_workers=n_workers)
+    dataload_val = DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=n_workers)
 
     # Instanciation du model
     # À compléter
+    model = trajectory2seq(hidden_dim=n_hidden, n_layers=n_layers,
+                    symb2int=dataset.symb2int, int2symb=dataset.int2symb,
+                    dict_size=dataset.dict_size, device=device, max_len=dataset.max_len)
 
-
-    # Initialisation des variables
+    # Initialisation des variablesDtaset initial
     # À compléter
 
     if trainning:
