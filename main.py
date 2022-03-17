@@ -85,7 +85,7 @@ if __name__ == '__main__':
                 writing = writing.to(device).float()
                 labels = labels.to(device).long()
 
-                pred, hidden = model(writing)
+                pred, hidden, att_weights = model(writing)
 
                 loss = criterion(pred.view((-1, model.dict_size)), labels.view(-1))
 
@@ -114,7 +114,7 @@ if __name__ == '__main__':
                 writing = writing.to(device).float()
                 labels = labels.to(device).long()
 
-                pred, hidden = model(writing)
+                pred, hidden, att_weights = model(writing)
                 loss = criterion(pred.view((-1, model.dict_size)), labels.view(-1))
                 running_loss_val += loss.item()
 
@@ -170,30 +170,37 @@ if __name__ == '__main__':
             writing = writing.to(device).float()
             labels = labels.to(device).long()
 
-            pred, hidden = model(writing)
+            pred, hidden, att_weights = model(writing)
             pred_word = torch.argmax(pred, dim=2)
 
         # Affichage de l'attention
-        # À compléter (si nécessaire)
+
 
         # Affichage des résultats de test
 
 
         for idx in range(5):
             w = writing[idx].cpu().detach().numpy()
-            p = pred_word[idx].cpu().detach().numpy()
-            l = labels[idx].cpu().detach().numpy()
+            p = pred_word[idx].detach().cpu().tolist()
+            l = labels[idx].detach().cpu().tolist()
             symb_p = [ds.int2symb[i] for i in p]
             symb_l = [ds.int2symb[i] for i in l]
-            print(symb_p)
-            print(symb_l)
-
-            print(edit_distance(symb_l, symb_p))
+            print(symb_l[:symb_l.index('<eos>')+1])
+            print(symb_p[:symb_p.index('<eos>')+1])
+            M = symb_l.index('<eos>')
+            print(edit_distance(symb_p[:M], symb_l[:M]))
 
             plt.figure()
             x, y = w.T
             plt.plot(x,y, '-bo')
             plt.show()
+
+            # attn = att_weights[idx].detach().cpu()[:,:]
+            # plt.figure()
+            # plt.imshow(attn[0:len(w), 0:len(l)], origin='lower',  vmax=1, vmin=0, cmap='pink')
+            # plt.xticks(np.arange(len(l)), l, rotation=45)
+            # plt.yticks(np.arange(len(w)), w)
+            # plt.show()
 
         # Affichage de la matrice de confusion
         # À compléter
