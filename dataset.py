@@ -56,14 +56,14 @@ class HandwrittenWords(Dataset):
                 labels[key] = labels[key] + [self.pad_symbol for _ in range(num_pads)]
 
         # Padding coordonnees
-        x = torch.nn.utils.rnn.pad_sequence(x, batch_first=True, padding_value=np.inf)
-        y = torch.nn.utils.rnn.pad_sequence(y, batch_first=True, padding_value=np.inf)
+        x = torch.nn.utils.rnn.pad_sequence(x, batch_first=True, padding_value=0)
+        y = torch.nn.utils.rnn.pad_sequence(y, batch_first=True, padding_value=0)
 
-        self.max_len = {'coords': len(x), 'labels': len(labels)}
+        self.max_len = {'coords': len(x[0]), 'labels': self.max+1}
         # Format de sortie
         self.data = dict()
         for i in range(len(labels)):
-            self.data[i] = (labels[i], torch.stack((x[i], y[i])))
+            self.data[i] = (labels[i], torch.stack((x[i], y[i]), dim=1))
 
 
     def __len__(self):
@@ -72,7 +72,7 @@ class HandwrittenWords(Dataset):
     def __getitem__(self, idx):
         label = self.data[idx][0]
         symb_label = [self.symb2int[i] for i in label]
-        return symb_label, self.data[idx][1]
+        return torch.tensor(symb_label), self.data[idx][1]
 
     def visualisation(self, idx):
         # Visualisation des échantillons
