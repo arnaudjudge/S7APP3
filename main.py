@@ -30,7 +30,7 @@ if __name__ == '__main__':
     n_epochs = 100
     lr = 0.01
 
-    n_hidden = 25
+    n_hidden = 15
     n_layers = 2
 
     # ---------------- Fin Paramètres et hyperparamètres ----------------#
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     # Instanciation du model
     if reuse_model:
-        model = torch.load('model.pt', map_location=lambda storage, loc: storage)
+        model = torch.load('model_BI_ATTN.pt', map_location=lambda storage, loc: storage)
         model = model.to(device)
         print('model loaded from file')
     else:
