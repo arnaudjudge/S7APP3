@@ -22,8 +22,8 @@ class trajectory2seq(nn.Module):
         # Definition des couches
         # Couches pour rnn
 
-        self.encoder_rnn = nn.GRU(input_size=2, hidden_size=self.hidden_dim, num_layers=self.n_layers, batch_first=True)
-        self.decoder_rnn = nn.GRU(input_size=self.hidden_dim, hidden_size=self.hidden_dim, num_layers=self.n_layers, batch_first=True)
+        self.encoder_rnn = nn.GRU(input_size=2, hidden_size=self.hidden_dim, num_layers=self.n_layers, batch_first=True, bidirectional=True)
+        self.decoder_rnn = nn.GRU(input_size=self.hidden_dim, hidden_size=self.hidden_dim, num_layers=self.n_layers*2, batch_first=True)
         self.embedding = nn.Embedding(num_embeddings=self.dict_size, embedding_dim=self.hidden_dim)
 
         # Couches pour attention
@@ -70,6 +70,9 @@ class trajectory2seq(nn.Module):
     def forward(self, x, h=None):
 
         x, h = self.encoder(x)
+        #faire la somme des sortie encodeur (avant+reverse) pour garder la meme forme de decodeur
+        x = (x[:, :, :self.hidden_dim] +
+            x[:, :, self.hidden_dim:])
         x, h, w = self.decoder(x, h)
 
         return x, h, w
