@@ -2,6 +2,8 @@
 # Auteur: Jean-Samuel Lauzon et  Jonathan Vincent
 # Hivers 2022
 import numpy as np
+import torch
+
 
 def edit_distance(x,y):
     # Calcul de la distance d'édition
@@ -41,8 +43,14 @@ def edit_distance(x,y):
     return mat[l_a-1, l_b-1]
 
 def confusion_matrix(true, pred, ignore=[]):
-    # Calcul de la matrice de confusion
 
+    # Calcul de la matrice de confusion
+    conf_mat = torch.zeros(26, 26)
+    alph = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+            'v', 'w', 'x', 'y', 'z']
+    for i in alph:
+        for j in alph:
+            conf_mat[i][j] = ((pred == i) & (true == j)).sum.item()
+    return conf_mat
     # À compléter
 
-    return None

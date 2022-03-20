@@ -27,7 +27,7 @@ if __name__ == '__main__':
     train_val_split = 0.8
     test_length = 5
     batch_size = 64
-    n_epochs = 100
+    n_epochs = 1
     lr = 0.01
 
     n_hidden = 15
@@ -120,6 +120,7 @@ if __name__ == '__main__':
             model.eval()
             for data in dataload_val:
                 labels, writing = data
+
                 writing = writing.to(device).float()
                 labels = labels.to(device).long()
 
@@ -182,8 +183,9 @@ if __name__ == '__main__':
             labels = labels.to(device).long()
 
             pred, hidden, att_weights = model(writing)
+            preds.append(pred)
             pred_word = torch.argmax(pred, dim=2)
-
+            print(pred_word)
             for idx in range(len(labels)):
                 p = pred_word[idx].detach().cpu().tolist()
                 l = labels[idx].detach().cpu().tolist()
@@ -205,7 +207,7 @@ if __name__ == '__main__':
             p, _, attn = model(w.reshape(1, 457, 2))
             p = torch.argmax(p, dim=2).reshape(6).detach().cpu().tolist()
             l = rand_item[0].detach().cpu().tolist()
-
+            #print(p)
             symb_p = [ds.int2symb[i] for i in p]
             symb_l = [ds.int2symb[i] for i in l]
             print(symb_l[:symb_l.index('<eos>')+1])
@@ -230,5 +232,6 @@ if __name__ == '__main__':
             plt.show()
 
         # Affichage de la matrice de confusion
+         #matrix = confusion_matrix(pred,label)
         # À compléter
 
