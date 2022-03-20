@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     # ---------------- Paramètres et hyperparamètres ----------------#
     force_cpu = False           # Forcer a utiliser le cpu?
-    trainning = True           # Entrainement?
+    trainning = False           # Entrainement?
     test = True                # Test?
     learning_curves = True     # Affichage des courbes d'entrainement?
     gen_test_images = True     # Génération images test?
@@ -26,12 +26,12 @@ if __name__ == '__main__':
     reuse_model = False
     train_val_split = 0.8
     test_length = 5
-    batch_size = 64
-    n_epochs = 1
+    batch_size = 128
+    n_epochs = 100
     lr = 0.01
 
-    n_hidden = 15
-    n_layers = 2
+    n_hidden = 19
+    n_layers = 3
 
     # ---------------- Fin Paramètres et hyperparamètres ----------------#
 
@@ -110,8 +110,12 @@ if __name__ == '__main__':
                     l = labels[idx].detach().cpu().tolist()
                     # symb_p = [ds.int2symb[i] for i in p]
                     # symb_l = [ds.int2symb[i] for i in l]
-                    M = l.index(1)
-                    dist_t += edit_distance(p[:M],l[:M])/len(labels)
+                    if 1 in p:
+                        Mp = p.index(1)
+                    else:
+                        Mp = len(p)
+                    Ml = l.index(1)
+                    dist_t += edit_distance(p[:Mp],l[:Ml])/len(labels)
             edit_dist_train.append(dist_t)
 
             # Validation
@@ -120,7 +124,6 @@ if __name__ == '__main__':
             model.eval()
             for data in dataload_val:
                 labels, writing = data
-
                 writing = writing.to(device).float()
                 labels = labels.to(device).long()
 
@@ -134,8 +137,12 @@ if __name__ == '__main__':
                     l = labels[idx].detach().cpu().tolist()
                     # symb_p = [ds.int2symb[i] for i in p]
                     # symb_l = [ds.int2symb[i] for i in l]
-                    M = l.index(1)
-                    dist_v += edit_distance(p[:M],l[:M])/len(labels)
+                    if 1 in p:
+                        Mp = p.index(1)
+                    else:
+                        Mp = len(p)
+                    Ml = l.index(1)
+                    dist_v += edit_distance(p[:Mp],l[:Ml])/len(labels)
             edit_dist_val.append(dist_v/len(dataload_val))
 
             # Ajouter les loss aux listes
@@ -176,6 +183,7 @@ if __name__ == '__main__':
         # Charger les données de tests
         # prendre le val
         preds = []
+        true = []
         dist_test = 0
         for data in dataload_val:
             labels, writing = data
@@ -183,17 +191,22 @@ if __name__ == '__main__':
             labels = labels.to(device).long()
 
             pred, hidden, att_weights = model(writing)
-            preds.append(pred)
             pred_word = torch.argmax(pred, dim=2)
-            print(pred_word)
+
             for idx in range(len(labels)):
                 p = pred_word[idx].detach().cpu().tolist()
                 l = labels[idx].detach().cpu().tolist()
                 symb_p = [ds.int2symb[i] for i in p]
                 symb_l = [ds.int2symb[i] for i in l]
-                M = l.index(1)
-                d = edit_distance(p[:M],l[:M])
-                print(f"""Label: {symb_l[:symb_l.index('<eos>')+1]}\nPred: {symb_p[:symb_p.index('<eos>')+1]}\n--- Edit distance: {d}\n\n""")
+                if 1 in p:
+                    Mp = p.index(1)
+                else:
+                    Mp = len(p)
+                Ml = l.index(1)
+                d = edit_distance(p[:Mp],l[:Ml])
+                preds.append(symb_p)
+                true.append(symb_l)
+                #print(f"""Label: {symb_l[:symb_l.index('<eos>')+1]}\nPred: {symb_p[:symb_p.index('<eos>')+1]}\n--- Edit distance: {d}\n\n""")
                 dist_test += d/len(labels)
         dist_test = dist_test / len(dataload_val)
         print(f'Test edit distance: {dist_test}')
@@ -207,13 +220,14 @@ if __name__ == '__main__':
             p, _, attn = model(w.reshape(1, 457, 2))
             p = torch.argmax(p, dim=2).reshape(6).detach().cpu().tolist()
             l = rand_item[0].detach().cpu().tolist()
-            #print(p)
+
             symb_p = [ds.int2symb[i] for i in p]
             symb_l = [ds.int2symb[i] for i in l]
             print(symb_l[:symb_l.index('<eos>')+1])
             print(symb_p[:symb_p.index('<eos>')+1])
-            M = symb_l.index('<eos>')
-            print(edit_distance(symb_p[:M], symb_l[:M]))
+            Mp = symb_p.index('<eos>')
+            Ml = symb_l.index('<eos>')
+            print(edit_distance(symb_p[:Mp], symb_l[:Ml]))
             print('\n')
 
             x, y = w.cpu().detach().numpy().T
@@ -224,7 +238,7 @@ if __name__ == '__main__':
             # Affichage de l'attention
             attn = attn.cpu().detach().cpu()
             fig, ax = plt.subplots(6, 1)
-            cmap = matplotlib.colors.LinearSegmentedColormap.from_list('custom', ['#d0d0d0', '#000000'], N=100)
+            cmap = matplotlib.colors.LinearSegmentedColormap.from_list('custom', ['#d0d0d0', '#FF0000'], N=100)
             fig.suptitle(symb_l)
             for i in range(6):
                 ax[i].scatter(x, y, c=attn[0, :, i], s=1,  cmap=cmap)
@@ -232,6 +246,5 @@ if __name__ == '__main__':
             plt.show()
 
         # Affichage de la matrice de confusion
-         #matrix = confusion_matrix(pred,label)
         # À compléter
 
