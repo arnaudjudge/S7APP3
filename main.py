@@ -246,5 +246,17 @@ if __name__ == '__main__':
             plt.show()
 
         # Affichage de la matrice de confusion
-        # À compléter
+        # true = np.array([np.array(x) for x in true])
+        # preds = np.array([np.array(x) for x in preds])
+        cm, classes = confusion_matrix(true, preds)
+
+        plt.figure(figsize=(15, 15))
+        plt.matshow(cm)
+        for (i, j), z in np.ndenumerate(cm):
+           plt.text(j, i, f'{int(z)}', ha='center', va='center')
+        plt.xticks(range(len(classes)), classes, rotation=45)
+        plt.yticks(range(len(classes)), classes, rotation=45)
+        plt.colorbar()
+        plt.show()
+
 

@@ -45,12 +45,18 @@ def edit_distance(x,y):
 def confusion_matrix(true, pred, ignore=[]):
 
     # Calcul de la matrice de confusion
-    conf_mat = torch.zeros(26, 26)
-    alph = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
-            'v', 'w', 'x', 'y', 'z']
-    for i in alph:
-        for j in alph:
-            conf_mat[i][j] = ((pred == i) & (true == j)).sum.item()
-    return conf_mat
-    # À compléter
+    classes = np.unique(true)
+    conf_mat = np.zeros((len(classes), len(classes)))
+
+    # loop across the different combinations of actual / predicted classes
+    for l in range(len(true)):
+        t = true[l]
+        p = pred[l]
+        for i in range(len(classes)):
+            for j in range(len(classes)):
+                for k in range(len(t)):
+                    if (p[k] == classes[i]) & (t[k] == classes[j]):
+                        conf_mat[i, j] += 1
+    return conf_mat, classes
+
 
