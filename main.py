@@ -166,8 +166,8 @@ if __name__ == '__main__':
                 plt.plot(val_loss, label='validation loss')
                 plt.legend()
                 plt.title('Loss vs epochs')
-                plt.show()
                 plt.savefig('learning_curves_loss.png')
+                plt.show()
 
                 plt.figure()
                 plt.title('Edit distance vs epochs')
