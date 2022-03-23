@@ -30,15 +30,6 @@ def edit_distance(x,y):
             mat[i, j] = min(mat[i-1, j]+1,
                             mat[i, j-1]+1,
                             mat[i-1, j-1]+cost)
-        # Méthode recursive
-        # if len(x) == 0:
-        #     distance = len(y)
-        # elif len(y) == 0:
-        #     distance = len(x)
-        # elif x[0] == y[0]:
-        #     distance = edit_distance(x[1:], y[1:])
-        # else:
-        #     distance = 1 + min(edit_distance(x[1:], y), edit_distance(x, y[1:]), edit_distance(x[1:], y[1:]))
 
     return mat[l_a-1, l_b-1]
 
@@ -46,6 +37,7 @@ def confusion_matrix(true, pred, ignore=[]):
 
     # Calcul de la matrice de confusion
     classes = np.unique(true)
+    classes = [x for x in classes if x not in ignore]
     conf_mat = np.zeros((len(classes), len(classes)))
 
     # loop across the different combinations of actual / predicted classes

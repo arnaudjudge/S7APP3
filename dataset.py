@@ -11,7 +11,7 @@ import pickle
 class HandwrittenWords(Dataset):
     """Ensemble de donnees de mots ecrits a la main."""
 
-    def __init__(self, filename):
+    def __init__(self, filename, len_coords=None):
         # Lecture du text
         self.pad_symbol     = pad_symbol = '<pad>'
         self.start_symbol   = start_symbol = '<sos>'
@@ -57,7 +57,10 @@ class HandwrittenWords(Dataset):
                 labels[key] = labels[key] + [self.pad_symbol for _ in range(num_pads)]
 
         # Padding coordonnees
-        max_len = max([len(s) for s in x])
+        if len_coords:
+            max_len = len_coords
+        else:
+            max_len = max([len(s) for s in x])
         for i, xi in enumerate(x):
             n = len(xi)
             diff = max_len - n

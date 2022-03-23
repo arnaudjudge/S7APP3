@@ -15,8 +15,9 @@ if __name__ == '__main__':
 
     # ---------------- Paramètres et hyperparamètres ----------------#
     force_cpu = False           # Forcer a utiliser le cpu?
-    trainning = False           # Entrainement?
-    test = True                # Test?
+    trainning = True           # Entrainement?
+    test_w_val = True                # Test?
+    test_wo_labels = True                # Test?
     learning_curves = True     # Affichage des courbes d'entrainement?
     gen_test_images = True     # Génération images test?
     seed = 0                # Pour répétabilité
@@ -72,7 +73,6 @@ if __name__ == '__main__':
     best_val_loss = np.inf
 
     if trainning:
-        fig, ax = plt.subplots(1, 2) # Initialisation figure
         train_loss = []
         val_loss = []
         edit_dist_train = []
@@ -161,20 +161,23 @@ if __name__ == '__main__':
             print("\n")
             if learning_curves:
                 # visualization
-                ax[0].cla()
-                ax[0].plot(train_loss, label='training loss')
-                ax[0].plot(val_loss, label='validation loss')
-                ax[0].legend()
-                ax[1].cla()
-                ax[1].plot(edit_dist_train, '--', label='train edit distance')
-                ax[1].plot(edit_dist_val, '--', label='validation edit distance')
-                ax[1].legend()
-                # plt.draw()
-                # plt.pause(0.01)
-                plt.savefig('learning_curves.png')
-                #plt.show()
+                plt.figure() # Initialisation figure
+                plt.plot(train_loss, label='training loss')
+                plt.plot(val_loss, label='validation loss')
+                plt.legend()
+                plt.title('Loss vs epochs')
+                plt.show()
+                plt.savefig('learning_curves_loss.png')
 
-    if test:
+                plt.figure()
+                plt.title('Edit distance vs epochs')
+                plt.plot(edit_dist_train, '--', label='train edit distance')
+                plt.plot(edit_dist_val, '--', label='validation edit distance')
+                plt.legend()
+                plt.savefig('learning_curves_edit_dist.png')
+                plt.show()
+
+    if test_w_val:
         # Évaluation
         model = torch.load('model.pt', map_location=lambda storage, loc: storage)
         model = model.to(device)
@@ -217,7 +220,7 @@ if __name__ == '__main__':
             rand_item = ds[np.random.randint(0, len(ds))]
 
             w = rand_item[1].to(device).float()
-            p, _, attn = model(w.reshape(1, 457, 2))
+            p, _, attn = model(w.reshape(1, ds.max_len['coords'], 2))
             p = torch.argmax(p, dim=2).reshape(6).detach().cpu().tolist()
             l = rand_item[0].detach().cpu().tolist()
 
@@ -248,15 +251,49 @@ if __name__ == '__main__':
         # Affichage de la matrice de confusion
         # true = np.array([np.array(x) for x in true])
         # preds = np.array([np.array(x) for x in preds])
-        cm, classes = confusion_matrix(true, preds)
+        cm, classes = confusion_matrix(true, preds, ['<pad>'])
 
-        plt.figure(figsize=(15, 15))
+        plt.figure()
         plt.matshow(cm)
-        for (i, j), z in np.ndenumerate(cm):
-           plt.text(j, i, f'{int(z)}', ha='center', va='center')
+        # for (i, j), z in np.ndenumerate(cm):
+        #    plt.text(j, i, f'{int(z)}', ha='center', va='center')
         plt.xticks(range(len(classes)), classes, rotation=45)
         plt.yticks(range(len(classes)), classes, rotation=45)
+
         plt.colorbar()
         plt.show()
+
+    if test_wo_labels:
+        model = torch.load('model.pt', map_location=lambda storage, loc: storage)
+        model = model.to(device)
+        model.eval()
+        with open('data_test_no_labels.p', 'rb') as fp:
+            raw_data = pickle.load(fp)
+
+        ds_test = HandwrittenWords('data_test_no_labels.p', len_coords=457)
+        #ds_test.max_len['coords'] = 457 #forcer a 457 pour accomoder le modele qui a ete entrainer sur ca
+        for i in range(20):
+            # Extraction d'une séquence du dataset de validation
+            _, w = ds_test[np.random.randint(0,len(ds_test))]
+            w = w.to(device).float()
+
+            p, _, attn = model(w.reshape(1, ds_test.max_len['coords'], 2))
+            p = torch.argmax(p, dim=2).reshape(6).detach().cpu().tolist()
+
+            #prendre dict de ds comme ds_test est vide
+            symb_p = [ds.int2symb[i] for i in p]
+            print(symb_p[:symb_p.index('<eos>')+1])
+
+            x, y = w.cpu().detach().numpy().T
+            # Affichage de l'attention
+            attn = attn.cpu().detach().cpu()
+            fig, ax = plt.subplots(6, 1)
+            cmap = matplotlib.colors.LinearSegmentedColormap.from_list('custom', ['#d0d0d0', '#FF0000'], N=100)
+            fig.suptitle(symb_p)
+            for i in range(6):
+                ax[i].scatter(x, y, c=attn[0, :, i], s=1,  cmap=cmap)
+                ax[i].set_ylabel(symb_p[i])
+            plt.show()
+
 
 
